@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Navigation System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d45;
+    --text: #e2e8f4;
+    --muted: #64748b;
+    --teal: #00d4aa;
+    --orange: #ff7043;
+    --blue: #4d9de0;
+    --red: #ef4444;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --purple: #a78bfa;
+    --font-ui: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .header-title span { color: var(--teal); }
+
+  .header-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .mode-btn {
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .mode-btn.active-mst { border-color: var(--teal); color: var(--teal); background: rgba(0,212,170,0.08); }
+  .mode-btn.active-sp  { border-color: var(--orange); color: var(--orange); background: rgba(255,112,67,0.08); }
+  .mode-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .algo-select {
+    margin-top: 8px;
+  }
+
+  .algo-select label {
+    font-size: 10px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--font-mono);
+  }
+
+  select {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  select:focus { border-color: var(--teal); }
+
+  .node-select {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .node-row { display: flex; align-items: center; gap: 8px; }
+
+  .node-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-from { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+  .dot-to   { background: var(--teal);   box-shadow: 0 0 6px var(--teal); }
+
+  .find-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(0,212,170,0.15), rgba(77,157,224,0.15));
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    border-radius: 6px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .find-btn:hover { background: rgba(0,212,170,0.2); transform: translateY(-1px); }
+  .find-btn:active { transform: translateY(0); }
+
+  .info-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    padding: 4px 0;
+  }
+
+  .info-key { color: var(--muted); }
+  .info-val { color: var(--text); font-weight: 600; }
+  .info-val.highlight { color: var(--orange); }
+  .info-val.teal { color: var(--teal); }
+
+  .path-display {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .path-nodes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .path-node {
+    font-size: 9px;
+    padding: 2px 7px;
+    background: rgba(255,112,67,0.1);
+    border: 1px solid rgba(255,112,67,0.3);
+    color: var(--orange);
+    border-radius: 3px;
+  }
+
+  .path-arrow {
+    font-size: 9px;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-line {
+    width: 18px;
+    height: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .mst-stats {
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .mst-stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 0;
+  }
+
+  .mst-stat-key { color: var(--muted); }
+  .mst-stat-val { color: var(--teal); font-weight: 600; }
+
+  .canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .canvas-controls {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .canvas-btn {
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .canvas-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+  .tooltip {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+  }
+
+  .status-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    background: rgba(11,15,26,0.8);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .complexity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 6px;
+  }
+
+  .badge-fw { background: rgba(77,157,224,0.1); border: 1px solid rgba(77,157,224,0.3); color: var(--blue); }
+  .badge-pr { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); color: var(--teal); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">Campus <span>Navigation</span> System &nbsp;—&nbsp; BCSE204P Project 11</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="header-badge">MST + SHORTEST PATH</div>
+    <div class="header-badge">FLOYD-WARSHALL · PRIM'S · KRUSKAL'S</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <!-- Mode -->
+    <div class="sidebar-section">
+      <div class="section-label">View Mode</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active-mst" id="btn-mst" onclick="setMode('mst')">MST Network</button>
+        <button class="mode-btn" id="btn-sp" onclick="setMode('sp')">Shortest Path</button>
+      </div>
+    </div>
+
+    <!-- MST Panel -->
+    <div class="sidebar-section" id="panel-mst">
+      <div class="section-label">MST Algorithm</div>
+      <div class="algo-select">
+        <label>Select Algorithm</label>
+        <select id="mst-algo" onchange="computeMST()">
+          <option value="prim">Prim's Algorithm</option>
+          <option value="kruskal">Kruskal's Algorithm</option>
+        </select>
+      </div>
+      <div class="complexity-badge badge-pr" id="mst-complexity">O(V²) · Prim's</div>
+      <div class="mst-stats" id="mst-stats">
+        <div class="mst-stat-row"><span class="mst-stat-key">Total MST edges</span><span class="mst-stat-val" id="mst-edges">—</span></div>
+        <div class="mst-stat-row"><span class="mst-stat-key">Total cable length</span><span class="mst-stat-val" id="mst-cost">—</span></div>
+        <div class="mst-stat-row"><span class="mst-stat-key">Savings vs full graph</span><span class="mst-stat-val" id="mst-savings">—</span></div>
+      </div>
+    </div>
+
+    <!-- Shortest Path Panel -->
+    <div class="sidebar-section" id="panel-sp" style="display:none">
+      <div class="section-label">Shortest Path Query</div>
+      <div class="node-select">
+        <div class="node-row">
+          <div class="node-dot dot-from"></div>
+          <select id="sel-from" style="flex:1">
+            <option value="">Select source...</option>
+          </select>
+        </div>
+        <div class="node-row">
+          <div class="node-dot dot-to"></div>
+          <select id="sel-to" style="flex:1">
+            <option value="">Select destination...</option>
+          </select>
+        </div>
+        <button class="find-btn" onclick="findPath()">Find Shortest Path ↗</button>
+      </div>
+      <div class="complexity-badge badge-fw" style="margin-top:8px">O(V³) · Floyd-Warshall</div>
+    </div>
+
+    <!-- Result Info -->
+    <div class="sidebar-section" id="result-section" style="display:none">
+      <div class="section-label">Path Result</div>
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-key">Distance</span>
+          <span class="info-val highlight" id="res-dist">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Hops</span>
+          <span class="info-val" id="res-hops">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Algorithm</span>
+          <span class="info-val teal">Floyd-Warshall</span>
+        </div>
+        <div class="path-display">
+          <div class="info-key" style="font-size:9px;font-family:var(--font-mono);margin-bottom:4px">ROUTE</div>
+          <div class="path-nodes" id="path-nodes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="sidebar-section">
+      <div class="section-label">Legend</div>
+      <div class="legend">
+        <div class="legend-row"><div class="legend-dot" style="background:#4d9de0"></div> Academic Building</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div> Admin / Auditorium</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div> Amenity (Café, Medical)</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#f59e0b"></div> Hostel</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#a78bfa"></div> Entrance / Gate</div>
+        <div class="legend-row" style="margin-top:4px"><div class="legend-line" style="background:var(--teal)"></div> MST Edge (Fiber)</div>
+        <div class="legend-row"><div class="legend-line" style="background:var(--orange)"></div> Shortest Path</div>
+        <div class="legend-row"><div class="legend-line" style="background:#1e2d45;border:1px dashed #2a3d58;height:0"></div> Campus Road</div>
+      </div>
+    </div>
+
+    <!-- All-Pairs table toggle -->
+    <div class="sidebar-section">
+      <div class="section-label">Distance Matrix</div>
+      <button class="canvas-btn" style="width:100%;font-family:var(--font-ui);font-size:11px" onclick="toggleMatrix()">Show All-Pairs Distances ↗</button>
+    </div>
+  </aside>
+
+  <div class="canvas-area">
+    <canvas id="campus-map"></canvas>
+    <div class="canvas-controls">
+      <button class="canvas-btn" onclick="resetView()">Reset</button>
+      <button class="canvas-btn" onclick="showAllEdgeWeights = !showAllEdgeWeights; draw()">Weights</button>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="status-bar" id="status-bar">Click a building to inspect · Select mode from sidebar</div>
+
+    <!-- Matrix overlay -->
+    <div id="matrix-overlay" style="display:none;position:absolute;inset:0;background:rgba(11,15,26,0.95);overflow:auto;z-index:20;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--teal)">ALL-PAIRS SHORTEST DISTANCE MATRIX (meters)</div>
+        <button class="canvas-btn" onclick="toggleMatrix()">Close ✕</button>
+      </div>
+      <div id="matrix-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const buildings = [
+  { id: 0,  name: "Main Gate",       abbr: "MG",  x: 0.08, y: 0.78, category: "entrance" },
+  { id: 1,  name: "Admin Block",     abbr: "AB",  x: 0.24, y: 0.55, category: "admin" },
+  { id: 2,  name: "Library",         abbr: "LIB", x: 0.40, y: 0.30, category: "academic" },
+  { id: 3,  name: "CS Dept",         abbr: "CS",  x: 0.60, y: 0.22, category: "academic" },
+  { id: 4,  name: "ECE Dept",        abbr: "ECE", x: 0.78, y: 0.40, category: "academic" },
+  { id: 5,  name: "Mech Dept",       abbr: "ME",  x: 0.70, y: 0.65, category: "academic" },
+  { id: 6,  name: "Cafeteria",       abbr: "CAF", x: 0.44, y: 0.60, category: "amenity" },
+  { id: 7,  name: "Hostel Block",    abbr: "HB",  x: 0.16, y: 0.88, category: "hostel" },
+  { id: 8,  name: "Sports Complex",  abbr: "SC",  x: 0.70, y: 0.88, category: "amenity" },
+  { id: 9,  name: "Auditorium",      abbr: "AUD", x: 0.48, y: 0.82, category: "admin" },
+  { id: 10, name: "Medical Center",  abbr: "MC",  x: 0.24, y: 0.25, category: "amenity" },
+  { id: 11, name: "Lab Block",       abbr: "LAB", x: 0.60, y: 0.50, category: "academic" },
+];
+
+const edgeList = [
+  [0, 1, 220], [0, 7, 130],
+  [1, 2, 210], [1, 6, 170], [1, 10, 190], [1, 7, 180],
+  [2, 3, 160], [2, 10, 150], [2, 6, 200], [2, 11, 240],
+  [3, 4, 150], [3, 11, 140],
+  [4, 5, 160], [4, 11, 130],
+  [5, 6, 210], [5, 8, 130], [5, 9, 130], [5, 11, 150],
+  [6, 9, 140], [6, 11, 160],
+  [7, 9, 270],
+  [8, 9, 160],
+  [1, 0, 220],
+  [10, 3, 300],
+];
+
+const N = buildings.length;
+const COLORS = {
+  academic: '#4d9de0',
+  admin: '#ef4444',
+  amenity: '#22c55e',
+  hostel: '#f59e0b',
+  entrance: '#a78bfa',
+};
+
+let mode = 'mst';
+let mstEdges = [];
+let spPath = [];
+let spDist = 0;
+let distMatrix = [];
+let nextMatrix = [];
+let showAllEdgeWeights = false;
+let selectedFrom = -1;
+let selectedTo = -1;
+let hoveredNode = -1;
+let animFrame = 0;
+let animating = false;
+let animProgress = 0;
+let currentMSTAlgo = 'prim';
+
+const canvas = document.getElementById('campus-map');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+  draw();
+}
+
+function bx(px) { return px * canvas.width; }
+function by(py) { return py * canvas.height; }
+
+function primsMST() {
+  const adj = Array.from({length: N}, () => []);
+  for (const [u, v, w] of edgeList) {
+    adj[u].push([v, w]);
+    adj[v].push([u, w]);
+  }
+  const inMST = Array(N).fill(false);
+  const key = Array(N).fill(Infinity);
+  const parent = Array(N).fill(-1);
+  key[0] = 0;
+  const result = [];
+  let totalCost = 0;
+
+  for (let count = 0; count < N; count++) {
+    let u = -1;
+    for (let v = 0; v < N; v++) {
+      if (!inMST[v] && (u === -1 || key[v] < key[u])) u = v;
+    }
+    if (u === -1) break;
+    inMST[u] = true;
+    if (parent[u] !== -1) {
+      result.push([parent[u], u, key[u]]);
+      totalCost += key[u];
+    }
+    for (const [v, w] of adj[u]) {
+      if (!inMST[v] && w < key[v]) { key[v] = w; parent[v] = u; }
+    }
+  }
+  return { edges: result, cost: totalCost };
+}
+
+function kruskalsMST() {
+  const parent = Array.from({length: N}, (_, i) => i);
+  const rank = Array(N).fill(0);
+
+  function find(x) { return parent[x] === x ? x : (parent[x] = find(parent[x])); }
+  function union(a, b) {
+    a = find(a); b = find(b);
+    if (a === b) return false;
+    if (rank[a] < rank[b]) [a, b] = [b, a];
+    parent[b] = a;
+    if (rank[a] === rank[b]) rank[a]++;
+    return true;
+  }
+
+  const sorted = [...edgeList].sort((a, b) => a[2] - b[2]);
+  const result = [];
+  let totalCost = 0;
+
+  for (const [u, v, w] of sorted) {
+    if (union(u, v)) {
+      result.push([u, v, w]);
+      totalCost += w;
+      if (result.length === N - 1) break;
+    }
+  }
+  return { edges: result, cost: totalCost };
+}
+
+function floydWarshall() {
+  const INF = 1e9;
+  const dist = Array.from({length: N}, (_, i) => Array.from({length: N}, (_, j) => i === j ? 0 : INF));
+  const next = Array.from({length: N}, () => Array(N).fill(-1));
+
+  for (const [u, v, w] of edgeList) {
+    if (w < dist[u][v]) { dist[u][v] = w; next[u][v] = v; }
+    if (w < dist[v][u]) { dist[v][u] = w; next[v][u] = u; }
+  }
+  for (let i = 0; i < N; i++) next[i][i] = i;
+
+  for (let k = 0; k < N; k++) {
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < N; j++) {
+        if (dist[i][k] + dist[k][j] < dist[i][j]) {
+          dist[i][j] = dist[i][k] + dist[k][j];
+          next[i][j] = next[i][k];
+        }
+      }
+    }
+  }
+  return { dist, next };
+}
+
+function getPath(next, u, v) {
+  if (next[u][v] === -1) return [];
+  const path = [u];
+  while (u !== v) { u = next[u][v]; path.push(u); }
+  return path;
+}
+
+function computeMST() {
+  currentMSTAlgo = document.getElementById('mst-algo').value;
+  const result = currentMSTAlgo === 'prim' ? primsMST() : kruskalsMST();
+  mstEdges = result.edges;
+
+  const totalGraphCost = edgeList.reduce((s, e) => s + e[2], 0);
+  const savings = totalGraphCost - result.cost;
+
+  document.getElementById('mst-edges').textContent = mstEdges.length;
+  document.getElementById('mst-cost').textContent = result.cost + ' m';
+  document.getElementById('mst-savings').textContent = savings + ' m (' + Math.round(savings/totalGraphCost*100) + '%)';
+
+  const complexityBadge = document.getElementById('mst-complexity');
+  complexityBadge.textContent = currentMSTAlgo === 'prim' ? 'O(V²) · Prim\'s' : 'O(E log E) · Kruskal\'s';
+  complexityBadge.className = 'complexity-badge badge-pr';
+
+  animateIn();
+}
+
+function findPath() {
+  const fromSel = document.getElementById('sel-from');
+  const toSel = document.getElementById('sel-to');
+  selectedFrom = parseInt(fromSel.value);
+  selectedTo = parseInt(toSel.value);
+
+  if (isNaN(selectedFrom) || isNaN(selectedTo) || selectedFrom === selectedTo) {
+    setStatus('Select two different buildings');
+    return;
+  }
+
+  const d = distMatrix[selectedFrom][selectedTo];
+  if (d >= 1e9) {
+    setStatus('No path found between selected buildings');
+    return;
+  }
+
+  spPath = getPath(nextMatrix, selectedFrom, selectedTo);
+  spDist = d;
+
+  document.getElementById('res-dist').textContent = d + ' m';
+  document.getElementById('res-hops').textContent = (spPath.length - 1) + ' segments';
+
+  const container = document.getElementById('path-nodes');
+  container.innerHTML = '';
+  spPath.forEach((nid, i) => {
+    const span = document.createElement('span');
+    span.className = 'path-node';
+    span.textContent = buildings[nid].abbr;
+    container.appendChild(span);
+    if (i < spPath.length - 1) {
+      const arrow = document.createElement('span');
+      arrow.className = 'path-arrow';
+      arrow.textContent = '→';
+      container.appendChild(arrow);
+    }
+  });
+
+  document.getElementById('result-section').style.display = 'block';
+  setStatus('Path: ' + spPath.map(i => buildings[i].name).join(' → '));
+  animateIn();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('panel-mst').style.display = m === 'mst' ? '' : 'none';
+  document.getElementById('panel-sp').style.display = m === 'sp' ? '' : 'none';
+  document.getElementById('btn-mst').className = 'mode-btn' + (m === 'mst' ? ' active-mst' : '');
+  document.getElementById('btn-sp').className = 'mode-btn' + (m === 'sp' ? ' active-sp' : '');
+  if (m === 'sp') document.getElementById('result-section').style.display = 'none';
+  spPath = [];
+  animateIn();
+}
+
+function setStatus(msg) {
+  document.getElementById('status-bar').textContent = msg;
+}
+
+function animateIn() {
+  animating = true;
+  animProgress = 0;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  animStep();
+}
+
+function animStep() {
+  animProgress = Math.min(animProgress + 0.04, 1);
+  draw();
+  if (animProgress < 1) animFrame = requestAnimationFrame(animStep);
+  else animating = false;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawGrid();
+  drawEdges();
+  if (mode === 'mst' && mstEdges.length > 0) drawMSTEdges();
+  if (mode === 'sp' && spPath.length > 0) drawSPEdges();
+  drawNodes();
+}
+
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(30,45,69,0.5)';
+  ctx.lineWidth = 0.5;
+  const step = 40;
+  for (let x = 0; x < canvas.width; x += step) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += step) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+}
+
+function drawEdges() {
+  const mstSet = new Set(mstEdges.map(([u,v]) => u+'_'+v).concat(mstEdges.map(([u,v]) => v+'_'+u)));
+
+  for (const [u, v, w] of edgeList) {
+    if (u >= v) continue;
+    const key = u+'_'+v;
+    const isMSTEdge = mstSet.has(key);
+    if (mode === 'mst' && isMSTEdge) continue;
+
+    const bU = buildings[u], bV = buildings[v];
+    ctx.beginPath();
+    ctx.moveTo(bx(bU.x), by(bU.y));
+    ctx.lineTo(bx(bV.x), by(bV.y));
+    ctx.strokeStyle = 'rgba(42,61,88,0.7)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    if (showAllEdgeWeights) {
+      const mx = (bx(bU.x) + bx(bV.x)) / 2;
+      const my = (by(bU.y) + by(bV.y)) / 2;
+      ctx.fillStyle = 'rgba(100,116,139,0.9)';
+      ctx.font = '9px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(w+'m', mx, my - 3);
+    }
+  }
+}
+
+function drawMSTEdges() {
+  const t = animProgress;
+  mstEdges.forEach(([u, v, w], idx) => {
+    const frac = Math.min(1, t * mstEdges.length - idx);
+    if (frac <= 0) return;
+
+    const bU = buildings[u], bV = buildings[v];
+    const x1 = bx(bU.x), y1 = by(bU.y);
+    const x2 = bx(bV.x), y2 = by(bV.y);
+    const ex = x1 + (x2 - x1) * frac;
+    const ey = y1 + (y2 - y1) * frac;
+
+    ctx.save();
+    ctx.shadowColor = '#00d4aa';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = '#00d4aa';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.restore();
+
+    if (frac >= 1 && showAllEdgeWeights) {
+      const mx = (x1 + x2) / 2;
+      const my = (y1 + y2) / 2;
+      ctx.fillStyle = '#00d4aa';
+      ctx.font = '9px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(w+'m', mx, my - 4);
+    }
+  });
+}
+
+function drawSPEdges() {
+  const t = animProgress;
+  for (let i = 0; i < spPath.length - 1; i++) {
+    const frac = Math.min(1, t * (spPath.length - 1) - i);
+    if (frac <= 0) continue;
+
+    const u = spPath[i], v = spPath[i + 1];
+    const bU = buildings[u], bV = buildings[v];
+    const x1 = bx(bU.x), y1 = by(bU.y);
+    const x2 = bx(bV.x), y2 = by(bV.y);
+    const ex = x1 + (x2 - x1) * frac;
+    const ey = y1 + (y2 - y1) * frac;
+
+    ctx.save();
+    ctx.shadowColor = '#ff7043';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(ex, ey);
+    ctx.strokeStyle = '#ff7043';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawNodes() {
+  buildings.forEach(b => {
+    const x = bx(b.x), y = by(b.y);
+    const r = 18;
+    const color = COLORS[b.category];
+    const isHovered = hoveredNode === b.id;
+    const isFrom = selectedFrom === b.id && mode === 'sp';
+    const isTo = selectedTo === b.id && mode === 'sp';
+    const isOnPath = spPath.includes(b.id) && mode === 'sp';
+
+    ctx.save();
+
+    if (isHovered || isFrom || isTo) {
+      ctx.shadowColor = isFrom ? '#ff7043' : isTo ? '#00d4aa' : color;
+      ctx.shadowBlur = 16;
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#0b0f1a';
+    ctx.fill();
+
+    ctx.strokeStyle = isFrom ? '#ff7043' : isTo ? '#00d4aa' : isOnPath ? '#ff7043' : color;
+    ctx.lineWidth = isHovered || isFrom || isTo ? 2.5 : 1.5;
+    ctx.stroke();
+
+    ctx.restore();
+
+    ctx.font = 'bold 9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isFrom ? '#ff7043' : isTo ? '#00d4aa' : color;
+    ctx.fillText(b.abbr, x, y);
+
+    ctx.font = '10px Syne, sans-serif';
+    ctx.fillStyle = isHovered ? '#e2e8f4' : 'rgba(148,163,184,0.9)';
+    ctx.textBaseline = 'top';
+    ctx.fillText(b.name, x, y + r + 3);
+  });
+}
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const cx = mx * scaleX, cy = my * scaleY;
+
+  let found = -1;
+  for (const b of buildings) {
+    const dx = bx(b.x) - cx, dy = by(b.y) - cy;
+    if (Math.sqrt(dx*dx + dy*dy) < 20) { found = b.id; break; }
+  }
+
+  if (found !== hoveredNode) {
+    hoveredNode = found;
+    draw();
+    if (found !== -1) {
+      const b = buildings[found];
+      const tt = document.getElementById('tooltip');
+      tt.style.display = 'block';
+      tt.style.left = (e.clientX - rect.left + 14) + 'px';
+      tt.style.top  = (e.clientY - rect.top - 32) + 'px';
+      tt.innerHTML = `<span style="color:var(--teal)">${b.name}</span> · ${b.category}`;
+      setStatus(b.name + ' — ' + b.category + ' (click to set as from/to)');
+    } else {
+      document.getElementById('tooltip').style.display = 'none';
+    }
+  }
+});
+
+canvas.addEventListener('click', e => {
+  if (hoveredNode === -1) return;
+  if (mode === 'sp') {
+    const from = document.getElementById('sel-from');
+    const to = document.getElementById('sel-to');
+    if (from.value === '' || from.value === String(hoveredNode)) {
+      from.value = hoveredNode;
+    } else {
+      to.value = hoveredNode;
+      findPath();
+    }
+  }
+});
+
+function resetView() {
+  selectedFrom = -1; selectedTo = -1; spPath = [];
+  document.getElementById('sel-from').value = '';
+  document.getElementById('sel-to').value = '';
+  document.getElementById('result-section').style.display = 'none';
+  setStatus('View reset');
+  draw();
+}
+
+function toggleMatrix() {
+  const overlay = document.getElementById('matrix-overlay');
+  if (overlay.style.display === 'none') {
+    overlay.style.display = 'block';
+    renderMatrix();
+  } else {
+    overlay.style.display = 'none';
+  }
+}
+
+function renderMatrix() {
+  const container = document.getElementById('matrix-content');
+  const INF = 1e9;
+  let html = '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-family:JetBrains Mono,monospace;font-size:10px">';
+  html += '<tr><th style="padding:4px 8px;color:#64748b;border:1px solid #1e2d45"></th>';
+  buildings.forEach(b => {
+    html += `<th style="padding:4px 8px;color:#00d4aa;border:1px solid #1e2d45;white-space:nowrap">${b.abbr}</th>`;
+  });
+  html += '</tr>';
+
+  for (let i = 0; i < N; i++) {
+    html += `<tr><td style="padding:4px 8px;color:#00d4aa;border:1px solid #1e2d45;white-space:nowrap">${buildings[i].abbr}</td>`;
+    for (let j = 0; j < N; j++) {
+      const v = distMatrix[i][j];
+      const isPath = (i === selectedFrom && j === selectedTo) || (i === selectedTo && j === selectedFrom);
+      const color = i === j ? '#1e2d45' : v >= INF ? '#64748b' : isPath ? '#ff7043' : '#e2e8f4';
+      html += `<td style="padding:4px 8px;border:1px solid #1e2d45;text-align:center;color:${color}">${v >= INF ? '∞' : i === j ? '—' : v}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table></div>';
+  container.innerHTML = html;
+}
+
+function init() {
+  const { dist, next } = floydWarshall();
+  distMatrix = dist;
+  nextMatrix = next;
+
+  const fromSel = document.getElementById('sel-from');
+  const toSel = document.getElementById('sel-to');
+  buildings.forEach(b => {
+    fromSel.add(new Option(b.name, b.id));
+    toSel.add(new Option(b.name, b.id));
+  });
+
+  computeMST();
+  setStatus('Campus loaded · ' + N + ' buildings · ' + edgeList.filter(([u,v]) => u<v).length + ' paths');
+}
+
+window.addEventListener('resize', resize);
+resize();
+init();
+</script>
+</body>
+</html>
